@@ -15,10 +15,10 @@ def gitupdate():
 
 def deploy():
     proj_code_dir = '/home/gdevine/web/prod/cv_translator'
-    app_code_dir = '/home/gdevine/web/prod/cv_translator/cv_translator'
+    app_code_dir = '/home/gdevine/web/prod/cf_checker/cf_checker'
     with settings(warn_only=True):
         if run("test -d %s" % proj_code_dir).failed:
-            run("git clone git@github.com:gerarddevine/CV_Translator.git %s" % proj_code_dir)
+            run("git clone git@github.com:gerarddevine/cf_checker.git %s" % proj_code_dir)
     with cd(proj_code_dir):
         run("pwd")
         run("ls -la")
@@ -27,5 +27,5 @@ def deploy():
         run(env.activate + " && pip install -r requirements.txt")
     with cd(app_code_dir):
         run(env.activate + " && python manage.py syncdb --noinput")
-        run(env.activate + " && chmod 777 cv_translator.sqlite")
+        run(env.activate + " && chmod 777 cf_checker.sqlite")
 
