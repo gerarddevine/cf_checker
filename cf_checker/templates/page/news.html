@@ -1,0 +1,30 @@
+{% extends "site/one_column_page.html" %}
+    
+    {% block page_column_one %}
+        <br/>
+        
+        <!-- NEWS 'Block' -->
+        <div class="row">
+          <div class="span9 alert">
+            <h2>Announcement - March 2011 </h2>
+            <p> CF Checker updated to Version 2.0.3. This is a minor update. A 
+            summary of the changes follows:</p>
+            <ul>
+              <li> Missing_value is no longer deprecated by the NUG </li>
+              <li> Fix bug where the checker was incorrectly complaining about a missing units attribute on some dimensionless variable </li>.
+              <li> If the standard name modifier 'number_of_observations' is present then allow units to be omitted or units="1" </li>
+              <li> Fix bug with singleton aux-coord variable of type numpy.float64 </li>
+            </ul>
+            
+            <p>Please email (r.s.hatcher@reading.ac.uk) if you encounter any problems.</p> 
+            <p>Note: With UDUNITS-2 unit symbol comparisons are case-sensitive but unit name comparisons are not.</p> 
+            <p>The previous version of the checker (vn2.0.2) is still available here.<p>
+          </div>
+        </div>
+        <!-- end of NEWS 'Block' -->
+        
+    {% endblock %}
+    
+    {% block page_column_two %}
+    {% endblock %}
+

@@ -1,0 +1,36 @@
+{% extends "site/one_column_page.html" %}
+    
+    {% block page_column_one %}
+        <br/>
+        
+        <div class="row">
+          <div class="span9 alert">
+              The CF-checker was developed at the Hadley 
+              Centre for Climate Prediction and Research, UK Met Office by Rosalyn 
+              Hatcher. This work was supported by PRISM (PRogramme for Integrated 
+              Earth System Modelling).
+              <p/>
+              Development and maintenance for the CF-checker has now been taken 
+              over by the NCAS Computational Modelling Services (NCAS-CMS). If 
+              you have suggestions for improvement then please e-mail Rosalyn 
+              Hatcher at NCAS-CMS (r.s.hatcher@reading.ac.uk).
+              <p/>
+              To check your file, please use the drop down menu to select the 
+              version of the CF conventions to check against, enter the file name 
+              in the box below then press Check file. You can use the Browse... 
+              button to help you select the file.
+              <p/>
+              For details of the NetCDF format and the CF Convention go to the NetCDF 
+              format page or the CF Convention page.
+              <p/>
+              There are some requirements of the convention that it is difficult or 
+              impossible to implement in the Checker. A list of aspects which the 
+              checker doesn't check can be found here.
+          </div>
+        </div>
+        
+    {% endblock %}
+    
+    {% block page_column_two %}
+    {% endblock %}
+

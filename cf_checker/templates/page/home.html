@@ -1,0 +1,112 @@
+{% extends "site/one_column_page.html" %}
+    
+    {% block page_column_one %}
+        <br/>
+        <br/>
+        
+        <div class="row">
+          <div class="span10">
+              The CF Checker allows you to run the 'cfchecks.py' script to check that 
+              the contents of a NetCDF file comply with the Climate and Forecasts (CF) 
+              Metadata Convention.
+          </div>
+        </div>
+        
+        <br/>
+        <br/>
+        
+        <div class="row alert offset1 span7">
+        
+          <br/>
+          
+          <div class="row">
+            <div class="offset1 span2">
+              CF File:
+            </div>
+            <div class="span4">
+	          <form enctype="multipart/form-data" action="{{ urls.home }}" method="POST" onsubmit="return checkFile();">
+	            <input class="btn btn-block" type="hidden" name="MAX_FILE_SIZE"/>
+	            <input name="uploadedfile" type="file" id="cffile"/><br />
+	        </div>
+	      </div>
+	      
+	      <br/>
+	      
+	      <div class="row">	        	                
+            <div class="offset1 span2">
+              CF Version:
+            </div>
+            <div class="span4">
+              {{ cfform.cfversion }}
+            </div>
+          </div>
+          
+          <br/>
+          
+          <div class="row">
+            <div class="offset1 span2">
+              Ignore warnings: <p class="icon-info-sign ttip" rel="tooltip" data-placement="top" title="The cf checker will ignore ........."></p>
+            </div>
+            <div class="span4">
+              {{ cfform.igWarnings }} 
+            </div>
+          </div>
+          
+          <br/>
+          
+        </div>
+        
+        <br/>
+        
+        <div class="row">
+          <div class="offset2 span6">
+            <input id="mm" class="btn btn-primary btn-block" type="submit" value="Check File" />
+          </div>
+        </div>
+          </form>
+        
+	    <div id="nofile" class="modal hide fade">
+	      <div class="modal-header">      
+          </div> 
+		  <div class="modal-body">
+		    <p>You must select a file</p>
+		  </div>
+		  <div class="modal-footer">
+		    <button id="cancel" class="btn" data-dismiss="modal" type="button" name="cancel">Close</a>
+		  </div>
+	    </div>
+	    
+	    <div id="notcf" class="modal hide fade">
+          <div class="modal-header">      
+          </div> 
+          <div class="modal-body">
+            <p>You must select a netcdf file</p>
+          </div>
+          <div class="modal-footer">
+            <button id="cancel" class="btn" data-dismiss="modal" type="button" name="cancel">Close</a>
+          </div>
+        </div>
+    
+    {% endblock %}
+    
+    {% block extrajs %}
+      <script type="text/javascript">
+	      function checkFile() {
+	        var oTarget = document.getElementById('cffile');
+            if (oTarget.value.length < 1) {
+              $("#nofile").modal('show')
+              return false;
+            } 
+            
+            if (oTarget.value.indexOf(".cf") === -1) {
+              $("#notcf").modal('show')
+              return false;
+            }
+            else {
+              return true;
+            }
+            
+	      }
+      </script>
+    {% endblock %}
+    
