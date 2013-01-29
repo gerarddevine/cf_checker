@@ -1,4 +1,4 @@
-cv_translator
+cf_checker
 ===========
 
-Web application wrapper for Rupert Ford's mindmap CV checker and translator
+Web application wrapper for CF conformance checker
