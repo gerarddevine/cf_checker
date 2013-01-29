@@ -4,7 +4,7 @@ from django.template.context import RequestContext
 
 from cf_checker.apps.cfchecker.forms import CFForm
 from cf_checker.apps.cfchecker.utilities import genurls
-from cf_checker.apps.cfchecker.mindmap import checkMM, translateMM
+from cf_checker.apps.cfchecker.cfmanager import checkCF, translateMM
 
 
 def home(request):
@@ -22,10 +22,14 @@ def home(request):
     if request.method == 'POST':
         cfform = CFForm(request.POST, request.FILES)
         if cfform.is_valid():
-            # Grab the uploaded mindmap file
+            # Grab the uploaded netcdf file
             cffile = request.FILES['uploadedfile']
-            # Check for any warnings/errors in the freemind mindmap   
-            errors, warnings = checkMM(cffile) 
+            # Which version does the user want to check against?
+            cfversion = cfform.cleaned_data['cfversion']
+            # Is it only header data to be used?
+            headeronly = cfform.cleaned_data['headeronly']
+            # Pass the file and options to the checking script   
+            errors, warnings = checkCF(cffile, cfversion, headeronly) 
             # Are warnings to be ignored?
             igWarnings = cfform.cleaned_data['igWarnings']
             

@@ -13,12 +13,14 @@ logging=settings.LOG
 thisDir = os.path.dirname(__file__)
  
   
-def checkMM(mmfile):
-    ''' Checks that a mindmap file is valid and returns an 
+def checkCF(cffile, option1, option2):
+    ''' Checks that a netCDF file conforms to CF rules and return an 
     error list and warning list if not.
     
     In--
-    > mmfile - Freemind generated mindmap file
+    > cffile - netCDF file
+    > option1 - 
+    > option 2 - 
     
     Out--
     > errorlist - List of errors encountered during xslt translation
@@ -29,9 +31,9 @@ def checkMM(mmfile):
     #pull in the xsl transformation file
     XSLFileName = os.path.join(thisDir, 'xslt', 'mmcheck_0.9.0_bdl.xsl')
     #set the fpre file
-    fpre = open(os.path.join(thisDir,'xslt', str(mmfile)+'.pre'), 'w')
+    fpre = open(os.path.join(thisDir,'xslt', str(cffile)+'.pre'), 'w')
     #begin reading through each line in the mm file, and....
-    for line in mmfile:
+    for line in cffile:
         # make necessary mods to richcontent symbols
         if re.match("^<richcontent", line):
             line = line.replace('[','<')

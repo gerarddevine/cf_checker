@@ -16,8 +16,8 @@
         <br/>
         
         <div class="row alert offset1 span7">
-        
-          <br/>
+          
+          <br/> 
           
           <div class="row">
             <div class="offset1 span2">
@@ -42,13 +42,14 @@
           </div>
           
           <br/>
+          <br/>
           
           <div class="row">
             <div class="offset1 span2">
-              Ignore warnings: <p class="icon-info-sign ttip" rel="tooltip" data-placement="top" title="The cf checker will ignore ........."></p>
+              Use header only: <p class="icon-info-sign ttip" rel="tooltip" data-placement="top" title="The cf checker will ignore ........."></p>
             </div>
             <div class="span4">
-              {{ cfform.igWarnings }} 
+              {{ cfform.headeronly }} 
             </div>
           </div>
           
@@ -56,11 +57,10 @@
           
         </div>
         
-        <br/>
-        
         <div class="row">
           <div class="offset2 span6">
-            <input id="mm" class="btn btn-primary btn-block" type="submit" value="Check File" />
+            <br/>
+            <input id="mm" class="btn btn-large btn-primary btn-block" type="submit" value="Check File" />
           </div>
         </div>
           </form>
@@ -98,8 +98,8 @@
               return false;
             } 
             
-            if (oTarget.value.indexOf(".cf") === -1) {
-              $("#notcf").modal('show')
+            if (oTarget.value.indexOf(".nc") === -1) {
+              $("#notnc").modal('show')
               return false;
             }
             else {
