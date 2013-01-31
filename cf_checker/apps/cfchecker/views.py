@@ -4,8 +4,7 @@ from django.template.context import RequestContext
 
 from cf_checker.apps.cfchecker.forms import CFForm
 from cf_checker.apps.cfchecker.utilities import genurls
-from cf_checker.apps.cfchecker.cfmanager import checkCF, translateMM
-from cf_checker.apps.cfchecker.cfchecker_dummy import CFChecker
+from cf_checker.apps.cfchecker.cfchecks import CFChecker
 
 
 def home(request):

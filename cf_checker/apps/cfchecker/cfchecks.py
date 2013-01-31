@@ -30,7 +30,7 @@ Options:
  -u or --udunits:
        the location of the udunits.dat file
 
- -h or --help: Prints this help text.
+ -h or --help: self.htmlblock.append(s this help text.
 
  -v or --version: CF version to check against.
 
@@ -242,6 +242,9 @@ class CFChecker:
       self.err = 0
       self.warn = 0
       self.info = 0
+      #set up a list for storing messages
+      self.htmlblock = []
+      
 
   def checker(self, file):
     # Set up dictionary of all valid attributes, their type and use
@@ -250,21 +253,22 @@ class CFChecker:
 
     lowerVars=[]
     rc=1
-
-    print ""
+    
+    self.htmlblock.append("")
     if self.uploader:
         realfile = string.split(file,".nc")[0]+".nc"
-        print "CHECKING NetCDF FILE:", realfile
+        self.htmlblock.append( "CHECKING NetCDF FILE: %s" %realfile)
     elif self.useFileName=="no":
-        print "CHECKING NetCDF FILE"
+        self.htmlblock.append( "CHECKING NetCDF FILE")
     else:
-        print "CHECKING NetCDF FILE:",file
-    print "====================="
+        self.htmlblock.append( "CHECKING NetCDF FILE: %s" %file)
+    self.htmlblock.append( "=====================")
     
     # Check for valid filename
     if not fileSuffix.match(file):
-        print "ERROR (2.1): Filename must have .nc suffix"
-        exit(1)
+        self.htmlblock.append( "ERROR (2.1): Filename must have .nc suffix")
+        return self.htmlblock
+        #exit(1)
 
     # Initialize udunits-2 package
     # (Temporarily ignore messages to std error stream to prevent "Definition override" warnings
@@ -297,24 +301,25 @@ class CFChecker:
         parser.setContentHandler(self.area_type_lh)
         parser.parse(self.areaTypes)
     
-    print "Using CF Checker Version 2.0.4"
-    print "Using Standard Name Table Version "+self.std_name_dh.version_number+" ("+self.std_name_dh.last_modified+")"
+    self.htmlblock.append( "Using CF Checker Version 2.0.4")
+    self.htmlblock.append( "Using Standard Name Table Version %s (%s)" %self.std_name_dh.version_number, self.std_name_dh.last_modified)
     if self.version >= 1.4:
-        print "Using Area Type Table Version "+self.area_type_lh.version_number+" ("+self.area_type_lh.last_modified+")"
-    print ""
+        self.htmlblock.append( "Using Area Type Table Version %s (%s)" %self.area_type_lh.version_number, self.area_type_lh.last_modified)
+    self.htmlblock.append("")
     
     # Read in netCDF file
     try:
         self.f=cdms.open(file,"r")
 
     except AttributeError:
-        print "NetCDF Attribute Error:"
+        self.htmlblock.append( "NetCDF Attribute Error:")
         raise
     except:
-        print "\nCould not open file, please check that NetCDF is formatted correctly.\n".upper()
-        print "ERRORS detected:",1
+        self.htmlblock.append( "Could not open file, please check that NetCDF is formatted correctly.")
+        self.htmlblock.append( "ERRORS detected: 1")
         raise
-        exit(1)
+        #exit(1)
+        return self.htmlblock
 
     # Check global attributes
     if not self.chkGlobalAttributes(): rc=0
@@ -335,20 +340,20 @@ class CFChecker:
 
     # Check each variable
     for var in self.f._file_.variables.keys():
-        print ""
-        print "------------------"
-        print "Checking variable:",var
-        print "------------------"
+        self.htmlblock.append( "")
+        self.htmlblock.append( "------------------")
+        self.htmlblock.append( "Checking variable: %s" %var)
+        self.htmlblock.append( "------------------")
 
         if not self.validName(var):
-            print "ERROR (2.3): Invalid variable name -",var
+            self.htmlblock.append( "ERROR (2.3): Invalid variable name -%s" %var)
             self.err = self.err+1
             rc=0
 
         # Check to see if a variable with this name already exists (case-insensitive)
         lowerVar=var.lower()
         if lowerVar in lowerVars:
-            print "WARNING (2.3): variable clash:-",var
+            self.htmlblock.append( "WARNING (2.3): variable clash:- %s" %var)
             self.warn = self.warn + 1
         else:
             lowerVars.append(lowerVar)
@@ -399,17 +404,21 @@ class CFChecker:
             # or an axis that hasn't been identified through the coordinates attribute
             # CRM035 (17.04.07)
             if not (isinstance(self.f[var], FileAxis) or isinstance(self.f[var], FileAuxAxis1D)):
-                print "WARNING (5): Possible incorrect declaration of a coordinate variable."
+                self.htmlblock.append( "WARNING (5): Possible incorrect declaration of a coordinate variable.")
                 self.warn = self.warn+1
             else:    
                 if self.f[var].isTime():
                     if not self.chkTimeVariableAttributes(var): rc=0
 
-    print ""
-    print "ERRORS detected:",self.err
-    print "WARNINGS given:",self.warn
-    print "INFORMATION messages:",self.info
-
+    self.htmlblock.append( "")
+    self.htmlblock.append( "ERRORS detected: %s" %self.err)
+    self.htmlblock.append( "WARNINGS given: %s" %self.warn)
+    self.htmlblock.append( "INFORMATION messages: %s" %self.info)
+    
+    
+    return self.htmlblock
+    
+    '''
     if self.err:
         # Return number of errors found
         return self.err
@@ -419,7 +428,7 @@ class CFChecker:
     else:
         # No errors or warnings - return success!
         return 0
-
+    '''
 
   #-----------------------------
   def setUpAttributeList(self):
@@ -547,13 +556,13 @@ class CFChecker:
     # Parse the string representation of units into its binary representation for use by udunits
     binaryUnit = udunits.ut_parse(self.unitSystem, units, "UT_ASCII")
     if not binaryUnit:
-        # Don't print this message out o/w it is repeated for every variable
+        # Don't self.htmlblock.append( this message out o/w it is repeated for every variable
         # that has this dimension.  CRM033 return "None" instead
-        # print "ERROR: Invalid units:",units
+        # self.htmlblock.append( "ERROR: Invalid units:",units
         #self.err = self.err+1
         return None
 
-#    print "here"
+#    self.htmlblock.append( "here"
     
     # Time Coordinate
     # 19.08.10 - Workaround since udunits2 deems a unit without reference time not convertible to a
@@ -612,7 +621,7 @@ class CFChecker:
 ##             dimensions=self.f[var].getAxisIds()
 ##             dimensions.sort()
 ##             if not self.uniqueList(dimensions):
-##                 print "ERROR: variable has repeated dimensions"
+##                 self.htmlblock.append( "ERROR: variable has repeated dimensions"
 ##                 self.err = self.err+1
 
         #------------------------
@@ -621,7 +630,7 @@ class CFChecker:
         if self.f[var].attributes.has_key('coordinates'):
             # Check syntax of 'coordinates' attribute
             if not self.parseBlankSeparatedList(self.f[var].attributes['coordinates']):
-                print "ERROR (5): Invalid syntax for 'coordinates' attribute in",var
+                self.htmlblock.append( "ERROR (5): Invalid syntax for 'coordinates' attribute in %s" %var)
                 self.err = self.err+1
             else:
                 coordinates=string.split(self.f[var].attributes['coordinates'])
@@ -636,27 +645,27 @@ class CFChecker:
                             num_dimensions = len(self.f[dataVar].getAxisIds())
                             if self.version < 1.4:
                                 if not num_dimensions == 2:
-                                    print "ERROR (6.1): Label variable",dataVar,"must have 2 dimensions only"
+                                    self.htmlblock.append( "ERROR (6.1): Label variable %s must have 2 dimensions only" %dataVar)
                                     self.err = self.err+1
 
                             if self.version >= 1.4:
                                 if num_dimensions != 1 and num_dimensions != 2:
-                                    print "ERROR (6.1): Label variable",dataVar,"must have 1 or 2 dimensions, but has",num_dimensions
+                                    self.htmlblock.append( "ERROR (6.1): Label variable %s must have 1 or 2 dimensions, but has %s" %dataVar, num_dimensions)
                                     self.err = self.err+1
 
                             if num_dimensions == 2:
                                 if self.f[dataVar].getAxisIds()[0] not in self.f[var].getAxisIds():
-                                    print "ERROR (6.1): Leading dimension of",dataVar,"must match one of those for",var
+                                    self.htmlblock.append( "ERROR (6.1): Leading dimension of %s must match one of those for %s" %dataVar, var)
                                     self.err = self.err+1
                         else:
                             # Not a label variable
                             for dim in self.f[dataVar].getAxisIds():
                                 if dim not in self.f[var].getAxisIds():
-                                    print "ERROR (5): Dimensions of",dataVar,"must be a subset of dimensions of",var
+                                    self.htmlblock.append( "ERROR (5): Dimensions of %s must be a subset of dimensions of %s" %dataVar, var)
                                     self.err = self.err+1
                                     break
                     elif dataVar not in allVariables:
-                        print "ERROR (5): coordinates attribute referencing non-existent variable:",dataVar
+                        self.htmlblock.append( "ERROR (5): coordinates attribute referencing non-existent variable: %s" %dataVar)
                         self.err = self.err+1
 
         #-------------------------
@@ -666,14 +675,14 @@ class CFChecker:
             bounds=self.f[var].attributes['bounds']
             # Check syntax of 'bounds' attribute
             if not re.search("^[a-zA-Z0-9_]*$",bounds):
-                print "ERROR (7.1): Invalid syntax for 'bounds' attribute"
+                self.htmlblock.append( "ERROR (7.1): Invalid syntax for 'bounds' attribute")
                 self.err = self.err+1
             else:
                 if bounds in variables:
                     boundaryVars.append(bounds)
 
                     if not self.isNumeric(bounds):
-                        print "ERROR (7.1): boundary variable with non-numeric data type"
+                        self.htmlblock.append( "ERROR (7.1): boundary variable with non-numeric data type")
                         self.err = self.err+1
                     if len(self.f[var].shape) + 1 == len(self.f[bounds].shape):
                         if var in axes:
@@ -683,22 +692,22 @@ class CFChecker:
 
                         for dim in varDimensions:
                             if dim not in self.f[bounds].getAxisIds():
-                                print "ERROR (7.1): Incorrect dimensions for boundary variable:",bounds
+                                self.htmlblock.append( "ERROR (7.1): Incorrect dimensions for boundary variable: %s" %bounds)
                                 self.err = self.err+1
                     else:
-                        print "ERROR (7.1): Incorrect number of dimensions for boundary variable:",bounds
+                        self.htmlblock.append( "ERROR (7.1): Incorrect number of dimensions for boundary variable: %s" %bounds)
                         self.err = self.err+1
 
                     if self.f[bounds].attributes.has_key('units'):
                         if self.f[bounds].attributes['units'] != self.f[var].attributes['units']:
-                            print "ERROR (7.1): Boundary var",bounds,"has inconsistent units to",var
+                            self.htmlblock.append( "ERROR (7.1): Boundary var %s has inconsistent units to %s" %bounds, var)
                             self.err = self.err+1
                     if self.f[bounds].attributes.has_key('standard_name') and self.f[var].attributes.has_key('standard_name'):
                         if self.f[bounds].attributes['standard_name'] != self.f[var].attributes['standard_name']:
-                            print "ERROR (7.1): Boundary var",bounds,"has inconsistent std_name to",var
+                            self.htmlblock.append( "ERROR (7.1): Boundary var %s has inconsistent std_name to %s" %bounds, var)
                             self.err = self.err+1
                 else:
-                    print "ERROR (7.1): bounds attribute referencing non-existent variable:",bounds
+                    self.htmlblock.append( "ERROR (7.1): bounds attribute referencing non-existent variable: %s" %bounds)
                     self.err = self.err+1
                     
             # Check that points specified by a coordinate or auxilliary coordinate
@@ -719,14 +728,14 @@ class CFChecker:
                         # Bounds array will be 1 dimensional
                         if not ((varData <= boundsData[0] and varData >= boundsData[1])
                                 or (varData >= boundsData[0] and varData <= boundsData[1])):
-                            print "WARNING (7.1): Data for variable",var,"lies outside cell boundaries"
+                            self.htmlblock.append( "WARNING (7.1): Data for variable %s lies outside cell boundaries" %var)
                             self.warn = self.warn+1
                     else:
                         i=0
                         for value in varData:
                             if not ((value <= boundsData[i][0] and value >= boundsData[i][1]) \
                                     or (value >= boundsData[i][0] and value <= boundsData[i][1])):
-                                print "WARNING (7.1): Data for variable",var,"lies outside cell boundaries"
+                                self.htmlblock.append( "WARNING (7.1): Data for variable %s lies outside cell boundaries" %var)
                                 self.warn = self.warn+1
                                 break
                             i=i+1
@@ -738,28 +747,28 @@ class CFChecker:
             climatology=self.f[var].attributes['climatology']
             # Check syntax of 'climatology' attribute
             if not re.search("^[a-zA-Z0-9_]*$",climatology):
-                print "ERROR (7.4): Invalid syntax for 'climatology' attribute"
+                self.htmlblock.append( "ERROR (7.4): Invalid syntax for 'climatology' attribute")
                 self.err = self.err+1
             else:
                 if climatology in variables:
                     climatologyVars.append(climatology)
                     if not self.isNumeric(climatology):
-                        print "ERROR (7.4): climatology variable with non-numeric data type"
+                        self.htmlblock.append( "ERROR (7.4): climatology variable with non-numeric data type")
                         self.err = self.err+1
                     if self.f[climatology].attributes.has_key('units'):
                         if self.f[climatology].attributes['units'] != self.f[var].attributes['units']:
-                            print "ERROR (7.4): Climatology var",climatology,"has inconsistent units to",var
+                            self.htmlblock.append( "ERROR (7.4): Climatology var %s has inconsistent units to %s" %climatology, var)
                             self.err = self.err+1
                     if self.f[climatology].attributes.has_key('standard_name'):
                         if self.f[climatology].attributes['standard_name'] != self.f[var].attributes['standard_name']:
-                            print "ERROR (7.4): Climatology var",climatology,"has inconsistent std_name to",var
+                            self.htmlblock.append( "ERROR (7.4): Climatology var %s has inconsistent std_name to %s" %climatology, var)
                             self.err = self.err+1
                     if self.f[climatology].attributes.has_key('calendar'):
                         if self.f[climatology].attributes['calendar'] != self.f[var].attributes['calendar']:
-                            print "ERROR (7.4): Climatology var",climatology,"has inconsistent calendar to",var
+                            self.htmlblock.append( "ERROR (7.4): Climatology var %s has inconsistent calendar to %s" %climatology, var)
                             self.err = self.err+1
                 else:
-                    print "ERROR (7.4): climatology attribute referencing non-existent variable"
+                    self.htmlblock.append( "ERROR (7.4): climatology attribute referencing non-existent variable")
                     self.err = self.err+1
 
         #------------------------------------------
@@ -769,13 +778,13 @@ class CFChecker:
             grid_mapping = self.f[var].attributes['grid_mapping']
             # Check syntax of grid_mapping attribute: a string whose value is a single variable name.
             if not re.search("^[a-zA-Z0-9_]*$",grid_mapping):
-                print "ERROR (5.6):",var,"- Invalid syntax for 'grid_mapping' attribute"
+                self.htmlblock.append( "ERROR (5.6): %s- Invalid syntax for 'grid_mapping' attribute" %var)
                 self.err = self.err+1
             else:
                 if grid_mapping in variables:
                     gridMappingVars.append(grid_mapping)
                 else:
-                    print "ERROR (5.6): grid_mapping attribute referencing non-existent variable",grid_mapping
+                    self.htmlblock.append( "ERROR (5.6): grid_mapping attribute referencing non-existent variable %s" %grid_mapping)
                     self.err = self.err+1
                     
     return (coordVars, auxCoordVars, boundaryVars, climatologyVars, gridMappingVars)
@@ -803,16 +812,16 @@ class CFChecker:
               validNames[len(validNames):] = ['lambert_cylindrical_equal_area','mercator','orthographic']
               
           if var.grid_mapping_name not in validNames:
-              print "ERROR (5.6): Invalid grid_mapping_name:",var.grid_mapping_name
+              self.htmlblock.append( "ERROR (5.6): Invalid grid_mapping_name: %s" %var.grid_mapping_name)
               self.err = self.err+1
               rc=0
       else:
-          print "ERROR (5.6): No grid_mapping_name attribute set"
+          self.htmlblock.append( "ERROR (5.6): No grid_mapping_name attribute set")
           self.err = self.err+1
           rc=0
               
       if len(var.getAxisIds()) != 0:
-          print "WARNING (5.6): A grid mapping variable should have 0 dimensions"
+          self.htmlblock.append( "WARNING (5.6): A grid mapping variable should have 0 dimensions")
           self.warn = self.warn+1
 
       return rc
@@ -887,23 +896,23 @@ class CFChecker:
         conventions = self.f.attributes['Conventions']
         
         if conventions not in CFVersions:
-            print "ERROR (2.6.1): This netCDF file does not appear to contain CF Convention data."
+            self.htmlblock.append( "ERROR (2.6.1): This netCDF file does not appear to contain CF Convention data.")
             self.err = self.err+1
             rc=0
 
         if conventions != 'CF-'+str(self.version):
-            print "WARNING: Inconsistency - The conventions attribute is set to "+conventions+", but you've requested a validity check against CF",self.version
+            self.htmlblock.append( "WARNING: Inconsistency - The conventions attribute is set to %s, but you've requested a validity check against CF %s" %conventions, self.version)
             self.warn = self.warn+1
             
     else:
-        print "WARNING (2.6.1): No 'Conventions' attribute present"
+        self.htmlblock.append( "WARNING (2.6.1): No 'Conventions' attribute present")
         self.warn = self.warn+1
         rc=1
 
     for attribute in ['title','history','institution','source','reference','comment']:
         if self.f.attributes.has_key(attribute):
             if type(self.f.attributes[attribute]) != types.StringType:
-                print "ERROR (2.6.2): Global attribute",attribute,"must be of type 'String'"
+                self.htmlblock.append( "ERROR (2.6.2): Global attribute %s must be of type 'String'" %attribute)
                 self.err = self.err+1
     return rc
 
@@ -956,7 +965,7 @@ class CFChecker:
 
                     # Is there already a dimension with this axis attribute specified.
                     if axesFound[pos] == 1:
-                        print "ERROR (4): Variable has more than 1 coordinate variable with same axis value"
+                        self.htmlblock.append( "ERROR (4): Variable has more than 1 coordinate variable with same axis value")
                         self.err = self.err+1
                     else:
                         axesFound[pos] = 1
@@ -973,7 +982,7 @@ class CFChecker:
                 if firstST == -1:
                     firstST=pos
             except AttributeError:
-                print "ERROR: Problem accessing variable:",dim,"(May not exist in file)."
+                self.htmlblock.append( "ERROR: Problem accessing variable: %s (May not exist in file)" %dim)
                 self.err = self.err+1
                 exit(self.err)
             except ValueError:
@@ -987,7 +996,7 @@ class CFChecker:
                     lastPos=pos
                     trailingVars=[]
                 else:
-                    print "WARNING (2.4): space/time dimensions appear in incorrect order"
+                    self.htmlblock.append( "WARNING (2.4): space/time dimensions appear in incorrect order")
                     self.warn = self.warn+1
 
         # As per CRM #022 
@@ -998,16 +1007,16 @@ class CFChecker:
             if lastNonST > firstST and firstST != -1:
                 if len(trailingVars) == 1:
                     if var.id not in validTrailing:
-                        print "WARNING (2.4): dimensions",nonSpaceDimensions,"should appear to left of space/time dimensions"
+                        self.htmlblock.append( "WARNING (2.4): dimensions %s should appear to left of space/time dimensions" %nonSpaceDimensions)
                         self.warn = self.warn+1
                 else:
-                    print "WARNING (2.4): dimensions",nonSpaceDimensions,"should appear to left of space/time dimensions"
+                    self.htmlblock.append( "WARNING (2.4): dimensions %s should appear to left of space/time dimensions" %nonSpaceDimensions)
                     self.warn = self.warn+1
 
                 
         dimensions.sort()
         if not self.uniqueList(dimensions):
-            print "ERROR (2.4): variable has repeated dimensions"
+            self.htmlblock.append( "ERROR (2.4): variable has repeated dimensions")
             self.err = self.err+1
 
 ## Removed this check as per emails 11 June 2004 (See CRM #020)
@@ -1017,7 +1026,7 @@ class CFChecker:
 ##             if dim not in trailingVars:
 ##                 # dim is not a valid trailing dimension. (valid trailing dimensions e.g. for bounds
 ##                 # vars; do not need to have an associated coordinate variable CF doc 7.1)
-##                 print "WARNING: Dimension:",dim,"does not have an associated coordinate variable"
+##                 self.htmlblock.append( "WARNING: Dimension:",dim,"does not have an associated coordinate variable"
 ##                 self.warn = self.warn+1
 
 
@@ -1031,7 +1040,7 @@ class CFChecker:
     var=self.f[varName]
 
     if not self.validName(attribute) and attribute != "_FillValue":
-        print "ERROR: Invalid attribute name -",attribute
+        self.htmlblock.append( "ERROR: Invalid attribute name -%s" %attribute)
         self.err = self.err+1
         return 0
 
@@ -1055,7 +1064,7 @@ class CFChecker:
             #attrType=self.AttrList[attribute][0]
             attrType='NoneType'
         else:
-            print "Unknown Type for attribute:",attribute,attrType
+            self.htmlblock.append( "Unknown Type for attribute: %s %s" %attribute, attrType)
 
 
         # If attrType = 'NoneType' then it has been automatically created e.g. missing_value
@@ -1087,7 +1096,7 @@ class CFChecker:
                 typeError=1
 
             if typeError:
-                print "ERROR: Attribute",attribute,"of incorrect type"
+                self.htmlblock.append( "ERROR: Attribute %s of incorrect type" %attribute)
                 self.err = self.err+1
                 rc=0
                         
@@ -1108,10 +1117,10 @@ class CFChecker:
                     # variables whether set explicitly or not. Is this a cdms thing?
                     # Using var.missing_value is null then missing_value not set in the file
                     if var.missing_value:
-                        print "WARNING: attribute",attribute,"attached to wrong kind of variable"
+                        self.htmlblock.append( "WARNING: attribute %s attached to wrong kind of variable" %attribute)
                         self.warn = self.warn+1
                 else:
-                    print "INFO: attribute '" + attribute + "' is being used in a non-standard way"
+                    self.htmlblock.append( "INFO: attribute '%s' is being used in a non-standard way" %attribute)
                     self.info = self.info+1
             else:
                 i=i+1
@@ -1125,7 +1134,7 @@ class CFChecker:
                 varUnits = udunits.ut_parse(self.unitSystem, var.attributes['units'], "UT_ASCII")
                 secsSinceEpoch = udunits.ut_parse(self.unitSystem, "seconds since 1970-01-01", "UT_ASCII")
                 if not udunits.ut_are_convertible(varUnits, secsSinceEpoch) :
-                    print "ERROR (4.4.1): Attribute",attribute,"may only be attached to time coordinate variable"
+                    self.htmlblock.append( "ERROR (4.4.1): Attribute %s may only be attached to time coordinate variable" %attribute)
                     self.err = self.err+1
                     rc=0
 
@@ -1134,7 +1143,7 @@ class CFChecker:
                 udunits.ut_free(secsSinceEpoch)
                 
             else:        
-                print "ERROR (4.4.1): Attribute",attribute,"may only be attached to time coordinate variable"
+                self.htmlblock.append( "ERROR (4.4.1): Attribute %s may only be attached to time coordinate variable" %attribute)
                 self.err = self.err+1
                 rc=0
         
@@ -1179,11 +1188,11 @@ class CFChecker:
                     for d in dims:
                         if d:
                             if var.getAxisIndex(d) == -1 and not d in self.std_name_dh.dict.keys():
-                                print "ERROR (7.3): Invalid 'name' in cell_methods attribute:",d
+                                self.htmlblock.append( "ERROR (7.3): Invalid 'name' in cell_methods attribute: %s" %d)
                                 self.err = self.err+1
                                 rc=0
                             elif varDimensions.has_key(d) and d != "time":
-                                print "ERROR (7.3): Multiple cell_methods entries for dimension:",d
+                                self.htmlblock.append( "ERROR (7.3): Multiple cell_methods entries for dimension: %s" %d)
                                 self.err = self.err+1
                             else:
                                 varDimensions[d]=1
@@ -1202,7 +1211,7 @@ class CFChecker:
                         break
 
         if error:
-            print "ERROR (7.3): Invalid cell_methods syntax: '" + strError + "'"
+            self.htmlblock.append( "ERROR (7.3): Invalid cell_methods syntax: %s" %strError)
             self.err = self.err + 1
             rc=0
 
@@ -1241,7 +1250,7 @@ class CFChecker:
               leadingDim = self.f[value].getAxisIds()[0]
               # Must not be a value of more than one
               if self.f.dimensions[leadingDim] > 1:
-                  print "ERROR (7.3):",value,"is not allowed a leading dimension of more than one."
+                  self.htmlblock.append( "ERROR (7.3): %s is not allowed a leading dimension of more than one." %value)
                   self.err = self.err + 1
 
           if self.f[value].attributes.has_key('standard_name'):
@@ -1256,7 +1265,7 @@ class CFChecker:
 
 
   #----------------------------------
-  def chkCellMethods(self,varName):
+  def chkCellMethods(self, varName):
   #----------------------------------
     """Checks on cell_methods attribute
        dim1: [dim2: [dim3: ...]] method [where type1 [over type2]] [ (comment) ]
@@ -1284,7 +1293,7 @@ class CFChecker:
         # Validate the entire string
         m = pr1.match(cellMethods)
         if not m:
-            print "ERROR (7.3) Invalid syntax for cell_methods attribute"
+            self.htmlblock.append( "ERROR (7.3) Invalid syntax for cell_methods attribute")
             self.err = self.err + 1
             rc=0
 
@@ -1300,19 +1309,19 @@ class CFChecker:
         # Validate each substring
         for s in substr_iter:
             if not re.match(r'point|sum|maximum|median|mid_range|minimum|mean|mode|standard_deviation|variance',s.group('method')):
-                print "ERROR (7.3): Invalid cell_method:",s.group('method')
+                self.htmlblock.append( "ERROR (7.3): Invalid cell_method: %s" %s.group('method'))
                 self.err = self.err + 1
                 rc=0
 
             if self.version >= 1.4:
                 if s.group('type1'):
                     if not self.isValidCellMethodTypeValue('type1', s.group('type1')):
-                        print "ERROR (7.3): Invalid type1: '"+s.group('type1')+"' - must be a variable name or valid area_type"
+                        self.htmlblock.append( "ERROR (7.3): Invalid type1: '%s' - must be a variable name or valid area_type" %s.group('type1'))
                         self.err = self.err + 1
 
                 if s.group('type2'):
                     if not self.isValidCellMethodTypeValue('type2', s.group('type2')):
-                        print "ERROR (7.3): Invalid type2: '"+s.group('type2')+"' - must be a variable name or valid area_type"
+                        self.htmlblock.append( "ERROR (7.3): Invalid type2: '%s' - must be a variable name or valid area_type" %s.group('type2'))
                         self.err = self.err + 1
                                                       
             # Validate dim and check that it only appears once unless it is 'time'
@@ -1329,18 +1338,18 @@ class CFChecker:
                             if self.version >= 1.4:
                                 # Extra constraints at CF-1.4 and above
                                 if d != "area":
-                                    print "ERROR (7.3): Invalid 'name' in cell_methods attribute:",d
+                                    self.htmlblock.append( "ERROR (7.3): Invalid 'name' in cell_methods attribute: %s" %d)
                                     self.err = self.err+1
                                     rc=0
                             else:
-                                print "ERROR (7.3): Invalid 'name' in cell_methods attribute:",d
+                                self.htmlblock.append( "ERROR (7.3): Invalid 'name' in cell_methods attribute: %s" %d)
                                 self.err = self.err+1
                                 rc=0
                                 
                         else:
                             # dim is a variable dimension
                             if varDimensions.has_key(d) and d != "time":
-                                print "ERROR (7.3): Multiple cell_methods entries for dimension:",d
+                                self.htmlblock.append( "ERROR (7.3): Multiple cell_methods entries for dimension: %s" %d)
                                 self.err = self.err+1
                                 rc=0
                             else:
@@ -1351,7 +1360,7 @@ class CFChecker:
                                 # if the coordinate variable has either bounds or climatology attributes
                                 if d in self.coordVars and s.group('method') != 'point':
                                     if not self.f[d].attributes.has_key('bounds') and not self.f[d].attributes.has_key('climatology'):
-                                        print "WARNING (7.3): Coordinate variable",d,"should have bounds or climatology attribute"
+                                        self.htmlblock.append( "WARNING (7.3): Coordinate variable %s should have bounds or climatology attribute" %d)
                                         self.warn = self.warn + 1
                                                 
             # Validate the comment associated with this method, if present
@@ -1366,12 +1375,12 @@ class CFChecker:
                     i=i+1
                     unit=m.group('unit')
                     if not self.isValidUdunitsUnit(unit):
-                        print "ERROR (7.3): Invalid unit",unit,"in cell_methods comment"
+                        self.htmlblock.append( "ERROR (7.3): Invalid unit %s in cell_methods comment" %unit)
                         self.err = self.err + 1
                         rc=0
 
                 if i > 1 and i != dc:
-                    print "ERROR (7.3): Incorrect number or interval clauses in cell_methods attribute"
+                    self.htmlblock.append( "ERROR (7.3): Incorrect number or interval clauses in cell_methods attribute")
                     self.err = self.err + 1
                     rc=0
                     
@@ -1391,7 +1400,7 @@ class CFChecker:
     if var.attributes.has_key('cell_measures'):
         cellMeasures=var.attributes['cell_measures']
         if not re.search("^([a-zA-Z0-9]+: +([a-zA-Z0-9_ ]+:?)*( +[a-zA-Z0-9_]+)?)$",cellMeasures):
-            print "ERROR (7.2): Invalid cell_measures syntax"
+            self.htmlblock.append( "ERROR (7.2): Invalid cell_measures syntax")
             self.err = self.err+1
             rc=0
         else:
@@ -1404,15 +1413,15 @@ class CFChecker:
                     variable=splitIter.next()
 
                     if variable not in self.f.variables.keys():
-                        print "WARNING (7.2): cell_measures referring to variable '"+variable+"' that doesn't exist in this netCDF file."
-                        print "INFO (7.2): This is strictly an error if the cell_measures variable is not included in the dataset."
+                        self.htmlblock.append( "WARNING (7.2): cell_measures referring to variable '%s' that doesn't exist in this netCDF file." %variable)
+                        self.htmlblock.append( "INFO (7.2): This is strictly an error if the cell_measures variable is not included in the dataset.")
                         self.warn = self.warn+1
                         rc=0
                         
                     else:
                         # Valid variable name in cell_measures so carry on with tests.    
                         if len(self.f[variable].getAxisIds()) > len(var.getAxisIds()):
-                            print "ERROR (7.2): Dimensions of",variable,"must be same or a subset of",var.getAxisIds()
+                            self.htmlblock.append( "ERROR (7.2): Dimensions of %s must be same or a subset of %s" %variable, var.getAxisIds())
                             self.err = self.err+1
                             rc=0
                         else:
@@ -1420,23 +1429,23 @@ class CFChecker:
                             # Put in else so as not to duplicate ERROR messages.
                             for dim in self.f[variable].getAxisIds():
                                 if dim not in var.getAxisIds():
-                                    print "ERROR (7.2): Dimensions of",variable,"must be same or a subset of",var.getAxisIds()
+                                    self.htmlblock.append( "ERROR (7.2): Dimensions of %s must be same or a subset of %s" %variable, var.getAxisIds())
                                     self.err = self.err+1
                                     rc=0
                     
                         measure=re.sub(':','',measure)
                         if not re.match("^(area|volume)$",measure):
-                            print "ERROR (7.2): Invalid measure in attribute cell_measures"
+                            self.htmlblock.append( "ERROR (7.2): Invalid measure in attribute cell_measures")
                             self.err = self.err+1
                             rc=0
 
                         if measure == "area" and self.f[variable].units != "m2":
-                            print "ERROR (7.2): Must have square meters for area measure"
+                            self.htmlblock.append( "ERROR (7.2): Must have square meters for area measure")
                             self.err = self.err+1
                             rc=0
 
                         if measure == "volume" and self.f[variable].units != "m3":
-                            print "ERROR (7.2): Must have cubic meters for volume measure"
+                            self.htmlblock.append( "ERROR (7.2): Must have cubic meters for volume measure")
                             self.err = self.err+1
                             rc=0
                         
@@ -1461,12 +1470,12 @@ class CFChecker:
     if var.attributes.has_key('formula_terms'):
 
         if varName not in allCoordVars:
-            print "ERROR (4.3.2): formula_terms attribute only allowed on coordinate variables"
+            self.htmlblock.append( "ERROR (4.3.2): formula_terms attribute only allowed on coordinate variables")
             self.err = self.err+1
             
         # Get standard_name to determine which formula is to be used
         if not var.attributes.has_key('standard_name'):
-            print "ERROR (4.3.2): Cannot get formula definition as no standard_name"
+            self.htmlblock.append( "ERROR (4.3.2): Cannot get formula definition as no standard_name")
             self.err = self.err+1
             # No sense in carrying on as can't validate formula_terms without valid standard name
             return 0
@@ -1475,7 +1484,7 @@ class CFChecker:
         (stdName,modifier) = self.getStdName(var)
         
         if not self.alias.has_key(stdName):
-            print "ERROR (4.3.2): No formula defined for standard name:",stdName
+            self.htmlblock.append( "ERROR (4.3.2): No formula defined for standard name: %s" %stdName)
             self.err = self.err+1
             # No formula available so can't validate formula_terms
             return 0
@@ -1484,7 +1493,7 @@ class CFChecker:
 
         formulaTerms=var.attributes['formula_terms']
         if not re.search("^([a-zA-Z0-9_]+: +[a-zA-Z0-9_]+( +)?)*$",formulaTerms):
-            print "ERROR (4.3.2): Invalid formula_terms syntax"
+            self.htmlblock.append( "ERROR (4.3.2): Invalid formula_terms syntax")
             self.err = self.err+1
             rc=0
         else:
@@ -1494,7 +1503,7 @@ class CFChecker:
                 if not re.search("^[a-zA-Z0-9_]+:$", x):
                     # Variable - should be declared in netCDF file
                     if x not in self.f._file_.variables.keys():
-                        print "ERROR (4.3.2):",x,"is not declared as a variable"
+                        self.htmlblock.append( "ERROR (4.3.2): %s is not declared as a variable" %x)
                         self.err = self.err+1
                         rc=0       
                 else:
@@ -1507,7 +1516,7 @@ class CFChecker:
                             break
 
                     if found == 'false':
-                        print "ERROR (4.3.2): term",x,"not present in formula"
+                        self.htmlblock.append( "ERROR (4.3.2): term %s not present in formula" %x)
                         self.err = self.err+1
                         rc=0
 
@@ -1532,28 +1541,28 @@ class CFChecker:
           # Type of units is a string
           units = var.attributes['units']
           if type(units) != types.StringType:
-              print "ERROR (3.1): units attribute must be of type 'String'"
+              self.htmlblock.append( "ERROR (3.1): units attribute must be of type 'String'")
               self.err = self.err+1
               # units not a string so no point carrying out further tests
               return 0
             
           # units - level, layer and sigma_level are deprecated
           if units in ['level','layer','sigma_level']:
-              print "WARNING (3.1): units",units,"is deprecated"
+              self.htmlblock.append( "WARNING (3.1): units %s is deprecated" %units)
               self.warn = self.warn+1
           elif units == 'month':
-              print "WARNING (4.4): The unit 'month', defined by udunits to be exactly year/12, should"
-              print "         be used with caution."
+              self.htmlblock.append( "WARNING (4.4): The unit 'month', defined by udunits to be exactly year/12, should")
+              self.htmlblock.append( "         be used with caution.")
               self.warn = self.warn+1
           elif units == 'year':
-              print "WARNING (4.4): The unit 'year', defined by udunits to be exactly 365.242198781 days,"
-              print "         should be used with caution. It is not a calendar year."
+              self.htmlblock.append( "WARNING (4.4): The unit 'year', defined by udunits to be exactly 365.242198781 days,")
+              self.htmlblock.append( "         should be used with caution. It is not a calendar year.")
           else:
               
               # units must be recognizable by udunits package
               varUnit = udunits.ut_parse(self.unitSystem, units, "UT_ASCII")
               if not varUnit:
-                  print "ERROR (3.1): Invalid units: ",units
+                  self.htmlblock.append( "ERROR (3.1): Invalid units: %s" %units)
                   self.err = self.err+1
                   # Invalid units so no point continuing with further unit checks
                   return 0
@@ -1567,7 +1576,7 @@ class CFChecker:
                   if modifier == 'number_of_observations':
                       # Standard Name modifier is number_of_observations therefore units should be "1".  See Appendix C
                       if not units == "1":
-                          print "ERROR (3.3): Standard Name modifier 'number_of_observations' present therefore units must be set to 1."
+                          self.htmlblock.append( "ERROR (3.3): Standard Name modifier 'number_of_observations' present therefore units must be set to 1.")
                           self.err = self.err + 1
                   
                   elif stdName in self.std_name_dh.dict.keys():
@@ -1599,7 +1608,7 @@ class CFChecker:
 
                       if not udunits.ut_are_convertible(varUnit, canonicalUnit):
                           # Conversion unsuccessful
-                          print "ERROR (3.1): Units are not consistent with those given in the standard_name table."
+                          self.htmlblock.append( "ERROR (3.1): Units are not consistent with those given in the standard_name table.")
                           self.err = self.err+1
                           rc=0
 
@@ -1619,10 +1628,10 @@ class CFChecker:
               if self.f[var.id].typecode() != 'c':
                   if var.attributes.has_key('axis'):
                       if not var.axis == 'Z':
-                          print "WARNING (3.1): units attribute should be present"
+                          self.htmlblock.append( "WARNING (3.1): units attribute should be present")
                           self.warn = self.warn+1
                   elif not hasattr(var,'positive') and not hasattr(var,'formula_terms') and not hasattr(var,'compress'):
-                      print "WARNING (3.1): units attribute should be present"
+                      self.htmlblock.append( "WARNING (3.1): units attribute should be present")
                       self.warn = self.warn+1
 
           elif var.id not in self.boundsVars and var.id not in self.climatologyVars and var.id not in self.gridMappingVars:
@@ -1633,7 +1642,7 @@ class CFChecker:
               if not hasattr(var,'flag_values') and len(dimensions) != 0 and self.f[var.id].typecode() != 'c':
                   # Variable is not a flag variable or a scalar or a label
                   
-                  print "INFO (3.1): No units attribute set.  Please consider adding a units attribute for completeness."
+                  self.htmlblock.append( "INFO (3.1): No units attribute set.  Please consider adding a units attribute for completeness.")
                   self.info = self.info+1 
 
       return rc
@@ -1651,7 +1660,7 @@ class CFChecker:
       # units must be recognizable by the BADC units file
       for line in units_lines:
           if hasattr(var, 'units') and var.attributes['units'] in string.split(line):
-              print "Valid units in BADC list:", var.attributes['units']
+              self.htmlblock.append( "Valid units in BADC list: %s" %var.attributes['units'])
               rc=1
               break
           else:
@@ -1670,7 +1679,7 @@ class CFChecker:
           if var.attributes.has_key('valid_min') or \
              var.attributes.has_key('valid_max'):
 
-              print "ERROR (2.5.1): Illegal use of valid_range and valid_min/valid_max"
+              self.htmlblock.append( "ERROR (2.5.1): Illegal use of valid_range and valid_min/valid_max")
               self.err = self.err+1
               return 0
 
@@ -1696,11 +1705,11 @@ class CFChecker:
 ## has an attribute type of 'D'. See Trac #022
 ##         if varType == 'c' or varType == types.StringType:
 ##             if type(fillValue) != types.StringType:
-##                 print "ERROR (2.5.1): _FillValue of different type to variable"
+##                 self.htmlblock.append( "ERROR (2.5.1): _FillValue of different type to variable"
 ##                 self.err = self.err+1
 ##                 rc=0
 ##         elif varType != fillValue.dtype.char:
-##             print "ERROR (2.5.1): _FillValue of different type to variable"
+##             self.htmlblock.append( "ERROR (2.5.1): _FillValue of different type to variable"
 ##             self.err = self.err+1
 ##             rc=0
             
@@ -1708,22 +1717,22 @@ class CFChecker:
             # Check _FillValue is outside valid_range
             validRange=var.attributes['valid_range']
             if fillValue > validRange[0] and fillValue < validRange[1]:
-                print "WARNING (2.5.1): _FillValue should be outside valid_range"
+                self.htmlblock.append( "WARNING (2.5.1): _FillValue should be outside valid_range")
                 self.warn = self.warn+1
 
         if var.id in self.boundsVars:
-            print "WARNING (7.1): Boundary Variable",var.id,"should not have _FillValue attribute"
+            self.htmlblock.append( "WARNING (7.1): Boundary Variable %s should not have _FillValue attribute" %var.id)
             self.warn = self.warn+1
         elif var.id in self.climatologyVars:
-            print "ERROR (7.4): Climatology Variable",var.id,"must not have _FillValue attribute"
+            self.htmlblock.append( "ERROR (7.4): Climatology Variable %s must not have _FillValue attribute" %var.id)
             self.err = self.err+1
             rc=0
 
     if var.attributes.has_key('missing_value'):
         missingValue=var.attributes['missing_value']
 
-#        print type(missingValue)
-#        print type(Numeric.array([]))
+#        self.htmlblock.append( type(missingValue)
+#        self.htmlblock.append( type(Numeric.array([]))
 
         try:
             if missingValue:
@@ -1731,14 +1740,14 @@ class CFChecker:
                     if fillValue != missingValue:
                         # Special case: NaN == NaN is not detected as NaN does not compare equal to anything else
                         if not (numpy.isnan(fillValue) and numpy.isnan(missingValue)):
-                            print "WARNING (2.5.1): missing_value and _FillValue set to differing values"
+                            self.htmlblock.append( "WARNING (2.5.1): missing_value and _FillValue set to differing values")
                             
                             self.warn = self.warn+1
 
 ## 08.12.10 missing_value is no longer deprecated by the NUG
 ##            else:
 ##                # _FillValue not present
-##                print "WARNING (2.5.1): Use of 'missing_value' attribute is deprecated"
+##                self.htmlblock.append( "WARNING (2.5.1): Use of 'missing_value' attribute is deprecated"
 ##                self.warn = self.warn+1
                 
 ## 05.02.08 No longer needed as this is now detected by chkAttribute as missing_value
@@ -1751,26 +1760,26 @@ class CFChecker:
 ##                 typeError = 1
 ##
 ##             if typeError:
-##                 print "ERROR (2.5.1): missing_value of different type to variable"
+##                 self.htmlblock.append( "ERROR (2.5.1): missing_value of different type to variable"
 ##                 self.err = self.err+1
 ##                 rc=0
 
                 if var.id in self.boundsVars:
-                    print "WARNING (7.1): Boundary Variable",var.id,"should not have missing_value attribute"
+                    self.htmlblock.append( "WARNING (7.1): Boundary Variable %s should not have missing_value attribute" %var.id)
                     self.warn = self.warn+1
                 elif var.id in self.climatologyVars:
-                    print "ERROR (7.4): Climatology Variable",var.id,"must not have missing_value attribute"
+                    self.htmlblock.append( "ERROR (7.4): Climatology Variable %s must not have missing_value attribute" %var.id)
                     self.err = self.err+1
                     rc=0
 
         except ValueError:
 #            if type(missingValue) == type(Numeric.array([])):
-#                print "ERROR (2.5.1): missing_value should be a scalar value"
+#                self.htmlblock.append( "ERROR (2.5.1): missing_value should be a scalar value"
 #                self.err = self.err+1
 #                rc=0
 #            else:
-            print "ValueError:", exc_info()[1]
-            print "INFO: Could not complete tests on missing_value attribute"
+            self.htmlblock.append( "ValueError: %s" %exc_info()[1])
+            self.htmlblock.append( "INFO: Could not complete tests on missing_value attribute")
             raise
             rc=0
                 
@@ -1785,12 +1794,12 @@ class CFChecker:
       
       if var.attributes.has_key('axis'):
           if not re.match('^(X|Y|Z|T)$',var.attributes['axis'],re.I):
-              print "ERROR (4): Invalid value for axis attribute"
+              self.htmlblock.append( "ERROR (4): Invalid value for axis attribute")
               self.err = self.err+1
               return 0
 
           if self.version >= 1.1 and varName in self.auxCoordVars:
-              print "ERROR (4): Axis attribute is not allowed for auxillary coordinate variables."
+              self.htmlblock.append( "ERROR (4): Axis attribute is not allowed for auxillary coordinate variables.")
               self.err = self.err+1
               return 0
           
@@ -1805,13 +1814,13 @@ class CFChecker:
               # Variable does not have a units attribute so a consistency check cannot be made
               interp=None
 
-#          print "interp:",interp
-#          print "axis:",var.axis
+#          self.htmlblock.append( "interp:",interp
+#          self.htmlblock.append( "axis:",var.axis
 
           if interp != None:
               # It was possible to deduce axis interpretation from units/positive
               if interp != var.axis:
-                  print "ERROR (4): axis attribute inconsistent with coordinate type as deduced from units and/or positive"
+                  self.htmlblock.append( "ERROR (4): axis attribute inconsistent with coordinate type as deduced from units and/or positive")
                   self.err = self.err+1
                   return 0
             
@@ -1824,7 +1833,7 @@ class CFChecker:
       var=self.f[varName]
       if var.attributes.has_key('positive'):
           if not re.match('^(down|up)$',var.attributes['positive'],re.I):
-              print "ERROR (4.3): Invalid value for positive attribute"
+              self.htmlblock.append( "ERROR (4.3): Invalid value for positive attribute")
               self.err = self.err+1
               return 0
 
@@ -1842,45 +1851,45 @@ class CFChecker:
                         var.attributes['calendar'],re.I):
             # Non-standardized calendar so month_lengths should be present
             if not var.attributes.has_key('month_lengths'):
-                print "ERROR (4.4.1): Non-standard calendar, so month_lengths attribute must be present"
+                self.htmlblock.append( "ERROR (4.4.1): Non-standard calendar, so month_lengths attribute must be present")
                 self.err = self.err+1
                 rc=0
         else:   
             if var.attributes.has_key('month_lengths') or \
                var.attributes.has_key('leap_year') or \
                var.attributes.has_key('leap_month'):
-                print "ERROR (4.4.1): The attributes 'month_lengths', 'leap_year' and 'leap_month' must not appear when 'calendar' is present."
+                self.htmlblock.append( "ERROR (4.4.1): The attributes 'month_lengths', 'leap_year' and 'leap_month' must not appear when 'calendar' is present.")
                 self.err = self.err+1
                 rc=0
 
     if not var.attributes.has_key('calendar') and not var.attributes.has_key('month_lengths'):
-        print "WARNING (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables"
+        self.htmlblock.append( "WARNING (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables")
         self.warn = self.warn+1
         rc=0
         
     if var.attributes.has_key('month_lengths'):
         if len(var.attributes['month_lengths']) != 12 and \
            var.attributes['month_lengths'].dtype.char != 'i':
-            print "ERROR (4.4.1): Attribute 'month_lengths' should be an integer array of size 12"
+            self.htmlblock.append( "ERROR (4.4.1): Attribute 'month_lengths' should be an integer array of size 12")
             self.err = self.err+1
             rc=0
 
     if var.attributes.has_key('leap_year'):
         if var.attributes['leap_year'].dtype.char != 'i' and \
            len(var.attributes['leap_year']) != 1:
-            print "ERROR (4.4.1): leap_year should be a scalar value"
+            self.htmlblock.append( "ERROR (4.4.1): leap_year should be a scalar value")
             self.err = self.err+1
             rc=0
 
     if var.attributes.has_key('leap_month'):
         if not re.match("^(1|2|3|4|5|6|7|8|9|10|11|12)$",
                         str(var.attributes['leap_month'][0])):
-            print "ERROR (4.4.1): leap_month should be between 1 and 12"
+            self.htmlblock.append( "ERROR (4.4.1): leap_month should be between 1 and 12")
             self.err = self.err+1
             rc=0
 
         if not var.attributes.has_key('leap_year'):
-            print "WARNING (4.4.1): leap_month is ignored as leap_year NOT specified"
+            self.htmlblock.append( "WARNING (4.4.1): leap_month is ignored as leap_year NOT specified")
             self.warn = self.warn+1
 
     # Time units must contain a reference time
@@ -1889,7 +1898,7 @@ class CFChecker:
     secsSinceEpoch=udunits.ut_parse(self.unitSystem, "seconds since 1970-01-01", "UT_ASCII")
     
     if not udunits.ut_are_convertible(secsSinceEpoch, varUnits):
-        print "ERROR (4.4): Invalid units and/or reference time"
+        self.htmlblock.append( "ERROR (4.4): Invalid units and/or reference time")
         self.err = self.err+1
 
     # Free resources used by varUnits and secsSinceEpoch
@@ -1912,7 +1921,7 @@ class CFChecker:
 
           exceptions=self.boundsVars+self.climatologyVars+self.gridMappingVars
           if var.id not in exceptions:
-              print "WARNING (3): No standard_name or long_name attribute specified"
+              self.htmlblock.append( "WARNING (3): No standard_name or long_name attribute specified")
               self.warn = self.warn+1
               
       if var.attributes.has_key('standard_name'):
@@ -1923,12 +1932,12 @@ class CFChecker:
           # followed by a modifier (E.g. atmosphere_cloud_liquid_water_content status_flag)
           std_name_el=string.split(std_name)
           if not std_name_el:
-              print "ERROR (3.3): Empty string for 'standard_name' attribute"
+              self.htmlblock.append( "ERROR (3.3): Empty string for 'standard_name' attribute")
               self.err = self.err + 1
               rc=0
               
           elif not self.parseBlankSeparatedList(std_name) or len(std_name_el) > 2:
-              print "ERROR (3.3): Invalid syntax for 'standard_name' attribute: '"+std_name+"'"
+              self.htmlblock.append( "ERROR (3.3): Invalid syntax for 'standard_name' attribute: '%s'" %std_name)
               self.err = self.err + 1
               rc=0
 
@@ -1937,7 +1946,7 @@ class CFChecker:
               name=std_name_el[0]
               if not name in self.std_name_dh.dict.keys():
                   if chkDerivedName(name):
-                      print "ERROR (3.3): Invalid standard_name:",name
+                      self.htmlblock.append( "ERROR (3.3): Invalid standard_name: %s" %name)
                       self.err = self.err + 1
                       rc=0
 
@@ -1945,7 +1954,7 @@ class CFChecker:
                   # Validate modifier
                   modifier=std_name_el[1]
                   if not modifier in ['detection_minimum','number_of_observations','standard_error','status_flag']:
-                      print "ERROR (3.3): Invalid standard_name modifier: "+modifier
+                      self.htmlblock.append( "ERROR (3.3): Invalid standard_name modifier: %s" %modifier)
                       rc=0
                       
       return rc
@@ -1960,11 +1969,11 @@ class CFChecker:
         compress=var.attributes['compress']
 
         if var.typecode() != 'i':
-            print "ERROR (8.2):",var.id,"- compress attribute can only be attached to variable of type int."
+            self.htmlblock.append( "ERROR (8.2): %s- compress attribute can only be attached to variable of type int." %var.id)
             self.err = self.err+1
             return 0
         if not re.search("^[a-zA-Z0-9_ ]*$",compress):
-            print "ERROR (8.2): Invalid syntax for 'compress' attribute"
+            self.htmlblock.append( "ERROR (8.2): Invalid syntax for 'compress' attribute")
             self.err = self.err+1
             rc=0
         else:
@@ -1979,7 +1988,7 @@ class CFChecker:
                     found='true'
 
                 if found != 'true':
-                    print "ERROR (8.2): compress attribute naming non-existent dimension: ",x
+                    self.htmlblock.append( "ERROR (8.2): compress attribute naming non-existent dimension: %s" %x)
                     self.err = self.err+1
                     rc=0
 
@@ -1991,7 +2000,7 @@ class CFChecker:
                     break;
                 
             if outOfRange:
-                print "ERROR (8.2): values of",var.id,"must be in the range 0 to",dimProduct-1
+                self.htmlblock.append( "ERROR (8.2): values of %s must be in the range 0 to %s" %var.id, dimProduct-1)
                 self.err = self.err+1
     return rc
 
@@ -2002,7 +2011,7 @@ class CFChecker:
     var=self.f[varName]
     if var.attributes.has_key('scale_factor') and var.attributes.has_key('add_offset'):
         if var.attributes['scale_factor'].dtype.char != var.attributes['add_offset'].dtype.char:
-            print "ERROR (8.1): scale_factor and add_offset must be the same numeric data type"
+            self.htmlblock.append( "ERROR (8.1): scale_factor and add_offset must be the same numeric data type")
             self.err = self.err+1
             # No point running rest of packed data tests
             return 0
@@ -2029,17 +2038,17 @@ class CFChecker:
     # One or other attributes present; run remaining checks
     if varType != type:
         if type != 'f' and type != 'd':
-            print "ERROR (8.1): scale_factor and add_offset must be of type float or double"
+            self.htmlblock.append( "ERROR (8.1): scale_factor and add_offset must be of type float or double")
             self.err = self.err+1
             rc=0
 
         if varType != 'b' and  varType != 'h' and varType != 'i':
-            print "ERROR (8.1):",var.id,"must be of type byte, short or int"
+            self.htmlblock.append( "ERROR (8.1): %s must be of type byte, short or int" %var.id)
             self.err = self.err+1
             rc=0
 
         if type == 'f' and varType == 'i':
-            print "WARNING (8.1): scale_factor/add_offset are type float, therefore",var.id,"should not be of type int"
+            self.htmlblock.append( "WARNING (8.1): scale_factor/add_offset are type float, therefore %s should not be of type int" %var.id)
             self.warn = self.warn+1
             
     return rc
@@ -2057,7 +2066,7 @@ class CFChecker:
 
 #          if not self.parseBlankSeparatedList(meanings):
           if not self.extendedBlankSeparatedList(meanings):
-                print "ERROR (3.5): Invalid syntax for 'flag_meanings' attribute"
+                self.htmlblock.append( "ERROR (3.5): Invalid syntax for 'flag_meanings' attribute")
                 self.err = self.err+1
                 rc=0
           
@@ -2071,16 +2080,16 @@ class CFChecker:
                   
               retcode = self.equalNumOfValues(values,meanings)
               if retcode == -1:
-                  print "ERROR (3.5): Problem in subroutine equalNumOfValues"
+                  self.htmlblock.append( "ERROR (3.5): Problem in subroutine equalNumOfValues")
                   rc = 0
               elif not retcode:
-                  print "ERROR (3.5): Number of flag_values values must equal the number or words/phrases in flag_meanings"
+                  self.htmlblock.append( "ERROR (3.5): Number of flag_values values must equal the number or words/phrases in flag_meanings")
                   self.err = self.err + 1
                   rc = 0
                   
               # flag_values values must be mutually exclusive
               if not self.uniqueList(values):
-                  print "ERROR (3.5): flag_values attribute must contain a list of unique values"
+                  self.htmlblock.append( "ERROR (3.5): flag_values attribute must contain a list of unique values")
                   self.err = self.err + 1
                   rc = 0
                   
@@ -2090,17 +2099,17 @@ class CFChecker:
 
               retcode = self.equalNumOfValues(masks,meanings)
               if retcode == -1:
-                  print "ERROR (3.5): Problem in subroutine equalNumOfValues"
+                  self.htmlblock.append( "ERROR (3.5): Problem in subroutine equalNumOfValues")
                   rc = 0
               elif not retcode:
-                  print "ERROR (3.5): Number of flag_masks values must equal the number or words/phrases in flag_meanings"
+                  self.htmlblock.append( "ERROR (3.5): Number of flag_masks values must equal the number or words/phrases in flag_meanings")
                   self.err = self.err + 1
                   rc = 0
                   
               # flag_values values must be non-zero
               for v in masks:
                   if v == 0:
-                      print "ERROR (3.5): flag_masks values must be non-zero"
+                      self.htmlblock.append( "ERROR (3.5): flag_masks values must be non-zero")
                       self.err = self.err + 1
                       rc = 0
                       
@@ -2115,18 +2124,18 @@ class CFChecker:
                       bitwise_AND = v & masks[i]
 
                       if bitwise_AND != v:
-                          print "WARNING (3.5): Bitwise AND of flag_value",v,"and corresponding flag_mask",masks[i],"doesn't match flag_value."
+                          self.htmlblock.append( "WARNING (3.5): Bitwise AND of flag_value",v,"and corresponding flag_mask doesn't match flag_value." %v, masks[i])
                           self.warn = self.warn + 1
                       i=i+1
                  
           if values_or_masks == 0:
               # flag_meanings attribute present, but no flag_values or flag_masks
-              print "ERROR (3.5): flag_meanings present, but no flag_values or flag_masks specified"
+              self.htmlblock.append("ERROR (3.5): flag_meanings present, but no flag_values or flag_masks specified")
               self.err = self.err + 1
               rc = 0
 
           if var.attributes.has_key('flag_values') and not var.attributes.has_key('flag_meanings'):
-              print "ERROR (3.5): flag_meanings attribute is missing"
+              self.htmlblock.append( "ERROR (3.5): flag_meanings attribute is missing")
               self.err = self.err + 1
               rc = 0
               
@@ -2146,7 +2155,7 @@ class CFChecker:
           return "list"
 
       else:
-          print "<cfchecker> ERROR: Unknown Type in getType("+arg+")"
+          self.htmlblock.append( "<cfchecker> ERROR: Unknown Type in getType(%s)" %arg)
           return 0
   
   
@@ -2193,8 +2202,7 @@ class CFChecker:
       if var.id in axes and len(var._obj_.dimensions) > 1:
           # Multi-dimensional coordinate var
           if var.id in var._obj_.dimensions:
-              print "WARNING (5): The name of a multi-dimensional coordinate variable"
-              print "             should not match the name of any of its dimensions."
+              self.htmlblock.append( "WARNING (5): The name of a multi-dimensional coordinate variable should not match the name of any of its dimensions.")
               self.warn = self.warn + 1
 
 
@@ -2223,7 +2231,7 @@ class CFChecker:
                 type='incr'
             else:
                 # Same value - ERROR
-                print "ERROR (5): co-ordinate variable '" + var.id + "' not monotonic"
+                self.htmlblock.append( "ERROR (5): co-ordinate variable '%s' not monotonic" %var.id)
                 self.err = self.err+1
                 return 1
 
@@ -2232,12 +2240,12 @@ class CFChecker:
             i=i+1
             if val < lastVal and type != 'decr':
                 # ERROR - should be increasing value
-                print "ERROR (5): co-ordinate variable '" + var.id + "' not monotonic"
+                self.htmlblock.append( "ERROR (5): co-ordinate variable '%s' not monotonic" %var.id)
                 self.err = self.err+1
                 return 1
             elif val > lastVal and type != 'incr':
                 # ERROR - should be decreasing value
-                print "ERROR (5): co-ordinate variable '" + var.id + "' not monotonic"
+                self.htmlblock.append( "ERROR (5): co-ordinate variable '%s' not monotonic" %var.id)
                 self.err = self.err+1
                 return 1
 
@@ -2290,7 +2298,7 @@ def getargs(arglist):
             coards="yes"
             continue
         if a in ('-h','--help'):
-            print __doc__
+            print  __doc__
             exit(0)
         if a in ('-l','--uploader'):
             uploader="yes"
@@ -2307,8 +2315,8 @@ def getargs(arglist):
         if a in ('-v','--version'):
             version=float(v)
             if "CF-"+v not in CFVersions:
-                print "WARNING: CF-"+v+" is not a valid CF version."
-                print "Performing check against newest version",CFVersions[-1]
+                print "WARNING: CF-%s is not a valid CF version." %v
+                print "Performing check against newest version %s" %CFVersions[-1]
                 version=Versions[-1]
             continue
             
