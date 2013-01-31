@@ -15,7 +15,7 @@ MANAGERS = ADMINS
 SERVER_EMAIL = 'imap.exchange.reading.ac.uk'
 
 DATABASE_ENGINE = 'sqlite3'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = os.path.join(thisDir, 'db', 'cv_translator.sqlite') # Or path to database file if using sqlite3.
+DATABASE_NAME = os.path.join(thisDir, 'db', 'cf_checker.sqlite') # Or path to database file if using sqlite3.
 DATABASE_USER = ''             # Not used with sqlite3.
 DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
