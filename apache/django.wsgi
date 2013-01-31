@@ -24,6 +24,11 @@ for directory in vepath:
 sys.path.append('/home/gdevine/web/prod/cv_translator')
 sys.path.append('/home/gdevine/web/prod/cv_translator/cv_translator')
 
+# add paths to udunits and cdat
+sys.path.append('/home/ros/software/udunits-2.1.19/lib')
+sys.path.append('/home/ros/software/CDAT-5.2-cdms/lib/python2.5/site-packages')
+
+
 # Reorder sys.path so new directories at the front.
 new_sys_path = []
 for item in list(sys.path):

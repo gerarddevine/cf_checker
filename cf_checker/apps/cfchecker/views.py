@@ -5,6 +5,7 @@ from django.template.context import RequestContext
 from cf_checker.apps.cfchecker.forms import CFForm
 from cf_checker.apps.cfchecker.utilities import genurls
 from cf_checker.apps.cfchecker.cfmanager import checkCF, translateMM
+from cf_checker.apps.cfchecker.cfchecker_dummy import CFChecker
 
 
 def home(request):
@@ -28,26 +29,13 @@ def home(request):
             cfversion = cfform.cleaned_data['cfversion']
             # Is it only header data to be used?
             headeronly = cfform.cleaned_data['headeronly']
-            # Pass the file and options to the checking script   
-            errors, warnings = checkCF(cffile, cfversion, headeronly) 
-            # Are warnings to be ignored?
-            igWarnings = cfform.cleaned_data['igWarnings']
-            
-            if errors or (warnings and not igWarnings):   # generate an error/warnings report page
-                return render_to_response('page/report.html', {'urls': urls, 
-                                                               'errors': errors, 
-                                                               'warnings': warnings}, 
+            # Pass the file and options to the checking script  
+            inst = CFChecker(version=cfversion)
+            report = inst.checker(cffile)
+                        
+            return render_to_response('page/report.html', {'urls': urls, 'report': report, }, 
                                        context_instance=RequestContext(request))
-                
-            else: #continue to translation
-                translation = translateMM(cffile)
-                
-                mimetype='application/xml'
-                return HttpResponse(translation, mimetype)
-                #return render_to_response('page/report.html', {'urls': urls, 
-                #                                               'translation': translation}, 
-                #                       context_instance=RequestContext(request))
-                 
+                             
         else:
             # TODO: Need to put in better handling here
             return HttpResponseRedirect(urls['home'])

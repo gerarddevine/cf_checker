@@ -1,37 +1,18 @@
 {% extends "site/one_column_page.html" %}
     
     {% block page_column_one %}
+        <br/>
         
-	    <div class="page-header">
-	      {% if errors or warnings%}
-	        <h3>Your mindmap contains {{ errors|length }} errors and {{ warnings|length }} warnings</h3>
-	      {% else %}          
-	        <h3>Great! Your mindmap file is valid.</h3>
-          {% endif %}
-	    </div>
-    
+        <!-- Report 'Block' -->
         <div class="row">
-          {% if errors %}
-	          <ul>
-	            {% for error in errors %}
-	              <div class="alert alert-error">
-	              Error - {{ error }}
-	              </div>
-	            {% endfor %}
-	          </ul>
-	      {% endif %}
-          {% if warnings %}
-              <ul>
-                {% for warning in warnings %}
-                  <div class="alert alert-block">
-                    Warning - {{ warning }}
-                  </div>
-                {% endfor %}
-              </ul>
-          {% endif %}
-          <div class="span2 offset8">
-            <a class="btn btn-block" href="{{ urls.home }}">Return to Home Page</a>
+          <div class="span9">
+            <h3>File report</h3>
+            {% for line in report %}
+              <p>{{ line }}</p>
+            {% endfor %}
           </div>
         </div>
+        <!-- end of Report 'Block' -->
         
     {% endblock %}
+
