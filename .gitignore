@@ -7,4 +7,4 @@ build/*
 *.sqlite
 *.xml
 venv/
-cimexpgen/local_settings.py
+cf_checker/local_settings.py
