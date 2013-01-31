@@ -27,6 +27,7 @@ def deploy():
         run("virtualenv --no-site-packages -p /home/ros/software/CDAT-5.2-cdms/bin/python venv")
         run(env.activate + " && pip install -r requirements.txt")
     with cd(app_code_dir):
+        run(env.activate + " && mkdir db")
         run(env.activate + " && python manage.py syncdb --noinput")
         run(env.activate + " && chmod 777 cf_checker.sqlite")
 
