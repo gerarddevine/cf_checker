@@ -29,5 +29,5 @@ def deploy():
     with cd(app_code_dir):
         run(env.activate + " && mkdir db")
         run(env.activate + " && python manage.py syncdb --noinput")
-        run(env.activate + " && chmod 777 cf_checker.sqlite")
+        run(env.activate + " && chmod 777 db/cf_checker.sqlite")
 
